@@ -48,16 +48,28 @@ npm install
 3. Espera a que se configure
 
 #### Configura las variables de entorno
-Crea un archivo `.env` en la raíz del proyecto:
-
-```env
-VITE_SUPABASE_URL=tu_supabase_project_url
-VITE_SUPABASE_ANON_KEY=tu_supabase_anon_key
+1. Copia el archivo de ejemplo:
+```bash
+cp .env.example .env
 ```
 
-Puedes encontrar estos valores en:
-- **Project URL**: Settings → API → Project URL
-- **Anon Key**: Settings → API → Project API keys → anon public
+2. Edita el archivo `.env` con tus credenciales reales:
+```env
+VITE_SUPABASE_URL=https://tu-proyecto-id.supabase.co
+VITE_SUPABASE_ANON_KEY=tu-clave-anonima-aqui
+```
+
+**¿Dónde encontrar estas credenciales?**
+- Ve a tu proyecto en [Supabase Dashboard](https://supabase.com/dashboard)
+- En el menú lateral izquierdo, ve a **Settings** → **API**
+- Copia:
+  - **Project URL** → `VITE_SUPABASE_URL`
+  - **anon public** key → `VITE_SUPABASE_ANON_KEY`
+
+**⚠️ Importante:**
+- Nunca subas el archivo `.env` a Git (ya está en `.gitignore`)
+- Las variables deben empezar con `VITE_` para que Vite las incluya
+- Asegúrate de que la URL termine con `.supabase.co`
 
 #### Ejecuta el esquema de la base de datos
 1. Ve al SQL Editor en tu dashboard de Supabase
@@ -71,7 +83,14 @@ Esto creará:
 - Buckets de storage
 - Datos de ejemplo
 
-### 4. Ejecuta la aplicación
+### 4. Verifica la configuración
+```bash
+npm run check-env
+```
+
+Este comando verificará que tus variables de entorno estén correctamente configuradas.
+
+### 5. Ejecuta la aplicación
 ```bash
 npm run dev
 ```
