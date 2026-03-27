@@ -1,41 +1,65 @@
 import { useState, useEffect } from 'react';
 import { Search as SearchIcon, Music } from 'lucide-react';
 import { motion } from 'motion/react';
-import { Song } from '../../models/MusicModel';
+import { SongFull } from '../../models/MusicModel';
 import { SongCard } from '../components/SongCard';
 import MusicController from '../../controllers/MusicController';
 
 interface SearchProps {
-  onPlaySong: (song: Song) => void;
+  onPlaySong: (song: SongFull) => void;
 }
 
 export function Search({ onPlaySong }: SearchProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
-  const [searchResults, setSearchResults] = useState<Song[]>([]);
+  const [searchResults, setSearchResults] = useState<SongFull[]>([]);
   const [genres, setGenres] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const controller = MusicController.getInstance();
 
   useEffect(() => {
-    const allGenres = [...new Set(mockSongs.map(song => song.genre))].sort();
-    setGenres(allGenres);
+    loadGenres();
   }, []);
 
-  useEffect(() => {
-    if (searchQuery.trim()) {
-      const lowerQuery = searchQuery.toLowerCase();
-      const results = mockSongs.filter(song =>
-        song.title.toLowerCase().includes(lowerQuery) ||
-        song.artist.toLowerCase().includes(lowerQuery) ||
-        song.album.toLowerCase().includes(lowerQuery)
-      );
-      setSearchResults(results);
-      setSelectedGenre(null);
-    } else if (selectedGenre) {
-      const results = mockSongs.filter(song => song.genre === selectedGenre);
-      setSearchResults(results);
-    } else {
-      setSearchResults([]);
+  const loadGenres = async () => {
+    try {
+      const allSongs = await controller.getAllSongs();
+      const uniqueGenres = [...new Set(allSongs.map(song => song.song_title.split(' ')[0]))].sort(); // Simple genre extraction
+      setGenres(uniqueGenres);
+    } catch (error) {
+      console.error('Error loading genres:', error);
     }
+  };
+
+  useEffect(() => {
+    const performSearch = async () => {
+      if (!searchQuery.trim() && !selectedGenre) {
+        setSearchResults([]);
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        if (searchQuery.trim()) {
+          const results = await controller.searchSongs(searchQuery);
+          setSearchResults(results);
+          setSelectedGenre(null);
+        } else if (selectedGenre) {
+          // For now, just show all songs when a genre is selected
+          // TODO: Implement proper genre filtering in the database
+          const allSongs = await controller.getAllSongs();
+          setSearchResults(allSongs.slice(0, 20)); // Limit results
+        }
+      } catch (error) {
+        console.error('Error searching:', error);
+        setSearchResults([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    const debounceTimer = setTimeout(performSearch, 300); // Debounce search
+    return () => clearTimeout(debounceTimer);
   }, [searchQuery, selectedGenre]);
 
   const handleGenreClick = (genre: string) => {
@@ -56,7 +80,7 @@ export function Search({ onPlaySong }: SearchProps) {
 
   return (
     <div className="p-4 md:p-8 pt-16 md:pt-8">
-      <motion.h1 
+      <motion.h1
         className="text-2xl md:text-4xl mb-6 md:mb-8 bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -65,7 +89,7 @@ export function Search({ onPlaySong }: SearchProps) {
       </motion.h1>
 
       {/* Search Bar */}
-      <motion.div 
+      <motion.div
         className="relative mb-8"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -90,11 +114,15 @@ export function Search({ onPlaySong }: SearchProps) {
           <h2 className="text-2xl mb-6">
             Resultados para "{searchQuery}"
           </h2>
-          {searchResults.length > 0 ? (
+          {isLoading ? (
+            <div className="text-center py-12">
+              <p className="text-gray-400">Buscando...</p>
+            </div>
+          ) : searchResults.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
               {searchResults.map((song, index) => (
                 <motion.div
-                  key={song.id}
+                  key={song.song_id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
@@ -153,7 +181,7 @@ export function Search({ onPlaySong }: SearchProps) {
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 {searchResults.map((song, index) => (
                   <motion.div
-                    key={song.id}
+                    key={song.song_id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}

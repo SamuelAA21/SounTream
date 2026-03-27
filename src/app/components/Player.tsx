@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Play, Pause, SkipBack, SkipForward, Volume2, Heart, Repeat, Shuffle } from 'lucide-react';
 import { motion } from 'motion/react';
-import { Song } from '../data/mockData';
+import { SongFull } from '../../models/MusicModel';
 import { WaveformVisualizer } from './AudioVisualizer';
 
 interface PlayerProps {
-  currentSong: Song | null;
+  currentSong: SongFull | null;
   isPlaying: boolean;
   onPlayPause: () => void;
   onNext: () => void;
@@ -27,7 +27,7 @@ export function Player({ currentSong, isPlaying, onPlayPause, onNext, onPrevious
             onNext();
             return 0;
           }
-          return prev + (100 / currentSong.duration);
+          return prev + (100 / currentSong.duration_seconds);
         });
       }, 1000);
 
@@ -41,7 +41,7 @@ export function Player({ currentSong, isPlaying, onPlayPause, onNext, onPrevious
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const currentTime = currentSong ? Math.floor((progress / 100) * currentSong.duration) : 0;
+  const currentTime = currentSong ? Math.floor((progress / 100) * currentSong.duration_seconds) : 0;
 
   if (!currentSong) {
     return (
@@ -58,21 +58,21 @@ export function Player({ currentSong, isPlaying, onPlayPause, onNext, onPrevious
     <div className="h-20 md:h-28 bg-gradient-to-r from-purple-950/80 to-black/95 backdrop-blur-xl border-t border-white/10 px-2 md:px-6 flex items-center justify-between gap-2">
       {/* Song Info */}
       <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
-        <motion.img 
-          src={currentSong.cover} 
-          alt={currentSong.title} 
+        <motion.img
+          src={currentSong.album_cover || '/placeholder.jpg'}
+          alt={currentSong.song_title}
           className="w-12 h-12 md:w-16 md:h-16 rounded-lg md:rounded-xl shadow-lg"
           whileHover={{ scale: 1.05 }}
         />
         <div className="flex-1 min-w-0">
-          <motion.div 
+          <motion.div
             className="truncate text-sm md:text-base"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            {currentSong.title}
+            {currentSong.song_title}
           </motion.div>
-          <div className="text-xs md:text-sm text-gray-400 truncate">{currentSong.artist}</div>
+          <div className="text-xs md:text-sm text-gray-400 truncate">{currentSong.artist_name}</div>
         </div>
         <motion.button
           onClick={() => setIsLiked(!isLiked)}
@@ -95,16 +95,16 @@ export function Player({ currentSong, isPlaying, onPlayPause, onNext, onPrevious
           >
             <Shuffle className="w-4 h-4" />
           </motion.button>
-          
-          <motion.button 
-            onClick={onPrevious} 
+
+          <motion.button
+            onClick={onPrevious}
             className="text-gray-400 hover:text-white transition-colors"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
           >
             <SkipBack className="w-5 h-5 md:w-6 md:h-6" />
           </motion.button>
-          
+
           <motion.button
             onClick={onPlayPause}
             className="bg-gradient-to-r from-purple-500 to-cyan-500 text-white rounded-full p-2 md:p-3 shadow-lg shadow-purple-500/50"
@@ -113,16 +113,16 @@ export function Player({ currentSong, isPlaying, onPlayPause, onNext, onPrevious
           >
             {isPlaying ? <Pause className="w-5 h-5 md:w-6 md:h-6" /> : <Play className="w-5 h-5 md:w-6 md:h-6 ml-0.5" />}
           </motion.button>
-          
-          <motion.button 
-            onClick={onNext} 
+
+          <motion.button
+            onClick={onNext}
             className="text-gray-400 hover:text-white transition-colors"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
           >
             <SkipForward className="w-5 h-5 md:w-6 md:h-6" />
           </motion.button>
-          
+
           <motion.button
             onClick={() => setIsRepeat(!isRepeat)}
             className={`hidden md:block p-2 rounded-lg transition-colors ${isRepeat ? 'text-purple-400 bg-purple-500/20' : 'text-gray-400 hover:text-white'}`}
@@ -143,7 +143,7 @@ export function Player({ currentSong, isPlaying, onPlayPause, onNext, onPrevious
               transition={{ duration: 1 }}
             />
           </div>
-          <span className="w-8 md:w-10 text-xs">{formatTime(currentSong.duration)}</span>
+          <span className="w-8 md:w-10 text-xs">{formatTime(currentSong.duration_seconds)}</span>
         </div>
       </div>
 

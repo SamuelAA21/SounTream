@@ -3,11 +3,11 @@ import { Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Sidebar } from './Sidebar';
 import { Player } from './Player';
-import { Song } from '../data/mockData';
+import { SongFull } from '../../models/MusicModel';
 
 interface LayoutProps {
   children: ReactNode;
-  currentSong: Song | null;
+  currentSong: SongFull | null;
   isPlaying: boolean;
   onPlayPause: () => void;
   onNext: () => void;

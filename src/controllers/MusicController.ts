@@ -1,5 +1,5 @@
 import MusicDAO from '../dao/MusicDAO';
-import { Song, Playlist, UserProfile } from '../models/MusicModel';
+import { SongFull, Playlist, Profile, PlaylistSongView } from '../models/MusicModel';
 
 class MusicController {
   private static instance: MusicController;
@@ -14,90 +14,123 @@ class MusicController {
     return MusicController.instance;
   }
 
-  login(email: string, password: string): boolean {
-    const user = this.dao.login(email, password);
-    if (!user) return false;
-    this.dao.saveUser(user);
-    return true;
+  // Authentication
+  async login(email: string, password: string) {
+    return await this.dao.login(email, password);
   }
 
-  logout(): void {
-    this.dao.clearUser();
+  async logout() {
+    return await this.dao.logout();
   }
 
-  isAuthenticated(): boolean {
-    return !!this.dao.getUser();
+  async signUp(email: string, password: string, username: string) {
+    return await this.dao.signUp(email, password, username);
   }
 
-  getCurrentUser(): UserProfile | null {
-    return this.dao.getUser();
+  async getCurrentUser() {
+    return await this.dao.getCurrentUser();
   }
 
-  getAllSongs(): Song[] {
-    return this.dao.getAllSongs();
+  // Songs
+  async getAllSongs(): Promise<SongFull[]> {
+    return await this.dao.getAllSongs();
   }
 
-  getPopularSongs(limit: number): Song[] {
-    return this.dao.getPopularSongs(limit);
+  async getSongById(id: string): Promise<SongFull | null> {
+    return await this.dao.getSongById(id);
   }
 
-  getGenres(): string[] {
-    return this.dao.getGenres();
+  async searchSongs(query: string): Promise<SongFull[]> {
+    return await this.dao.searchSongs(query);
   }
 
-  searchSongs(query: string): Song[] {
-    return this.dao.searchSongs(query);
+  async getPopularSongs(limit: number = 10) {
+    return await this.dao.getPopularSongs(limit);
   }
 
-  getRecommendations(limit: number): Song[] {
-    const history = this.getHistory();
-    if (history.length === 0) return this.getPopularSongs(limit);
-    const recommended = this.getAllSongs()
-      .filter((s) => !history.some((h) => h.songId === s.id))
+  async getRecommendations(userId: string, limit: number = 10): Promise<SongFull[]> {
+    const history = await this.getHistory(userId);
+    if (history.length === 0) return await this.getPopularSongs(limit);
+
+    const allSongs = await this.getAllSongs();
+    const recommended = allSongs
+      .filter((s) => !history.some((h) => h.song_id === s.song_id))
       .slice(0, limit);
     return recommended;
   }
 
-  getHistory() {
-    return this.dao.getHistory();
+  // History
+  async getHistory(userId: string) {
+    return await this.dao.getHistory(userId);
   }
 
-  addToHistory(songId: string): void {
-    this.dao.addHistory(songId);
+  async addToHistory(userId: string, songId: string, playlistId?: string, durationPlayed?: number): Promise<void> {
+    return await this.dao.addHistory(userId, songId, playlistId, durationPlayed);
   }
 
-  clearHistory(): void {
-    this.dao.clearHistory();
+  async clearHistory(userId: string): Promise<void> {
+    return await this.dao.clearHistory(userId);
   }
 
-  getFavorites(): string[] {
-    return this.dao.getFavorites();
+  // Favorites
+  async getFavorites(userId: string): Promise<string[]> {
+    return await this.dao.getFavorites(userId);
   }
 
-  toggleFavorite(songId: string): string[] {
-    return this.dao.toggleFavorite(songId);
+  async toggleFavorite(userId: string, songId: string): Promise<string[]> {
+    return await this.dao.toggleFavorite(userId, songId);
   }
 
-  getAllPlaylists(): Playlist[] {
-    return this.dao.getPlaylists();
+  // Playlists
+  async getPlaylists(userId: string): Promise<Playlist[]> {
+    return await this.dao.getPlaylists(userId);
   }
 
-  addPlaylist(name: string): void {
-    const current = this.getAllPlaylists();
-    this.dao.savePlaylists([...current, { id: Date.now().toString(), name, songs: [] }]);
+  async createPlaylist(userId: string, name: string, description?: string, isPublic: boolean = false): Promise<Playlist> {
+    return await this.dao.createPlaylist(userId, name, description, isPublic);
   }
 
-  deletePlaylist(id: string): void {
-    const filtered = this.getAllPlaylists().filter((p) => p.id !== id);
-    this.dao.savePlaylists(filtered);
+  async updatePlaylist(playlistId: string, updates: Partial<Playlist>): Promise<void> {
+    return await this.dao.updatePlaylist(playlistId, updates);
   }
 
-  getUserStats() {
-    const history = this.dao.getHistory();
+  async deletePlaylist(playlistId: string): Promise<void> {
+    return await this.dao.deletePlaylist(playlistId);
+  }
+
+  async getPlaylistSongs(playlistId: string): Promise<PlaylistSongView[]> {
+    return await this.dao.getPlaylistSongs(playlistId);
+  }
+
+  async addSongToPlaylist(playlistId: string, songId: string): Promise<void> {
+    return await this.dao.addSongToPlaylist(playlistId, songId);
+  }
+
+  async removeSongFromPlaylist(playlistId: string, songId: string): Promise<void> {
+    return await this.dao.removeSongFromPlaylist(playlistId, songId);
+  }
+
+  // User Profile
+  async getUserProfile(userId: string): Promise<Profile | null> {
+    return await this.dao.getUserProfile(userId);
+  }
+
+  async updateUserProfile(userId: string, updates: Partial<Profile>): Promise<void> {
+    return await this.dao.updateUserProfile(userId, updates);
+  }
+
+  // Utility methods
+  async getUserStats(userId: string) {
+    const history = await this.getHistory(userId);
+    const favorites = await this.getFavorites(userId);
+    const playlists = await this.getPlaylists(userId);
+
     return {
       totalPlays: history.length,
-      favoriteGenres: [],
-      favoriteArtists: [],
+      totalFavorites: favorites.length,
+      totalPlaylists: playlists.length,
+      favoriteGenres: [], // TODO: implement genre analysis
+      favoriteArtists: [], // TODO: implement artist analysis
     };
   }
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Music, Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'motion/react';
+import MusicController from '../../controllers/MusicController';
 
 interface LoginProps {
   onLoginSuccess: () => void;
@@ -11,23 +12,30 @@ export function Login({ onLoginSuccess }: LoginProps) {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [username, setUsername] = useState('');
+
+  const controller = MusicController.getInstance();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
 
-    if (email === 'demo@soundwave.com' && password === 'demo123') {
-      const user = {
-        id: '1',
-        email: email,
-        favoriteGenres: [],
-        favoriteArtists: [],
-        history: []
-      };
-      localStorage.setItem('soundwave_user', JSON.stringify(user));
-      onLoginSuccess();
-    } else {
-      setError('Credenciales incorrectas. Usa: demo@soundwave.com / demo123');
+    try {
+      if (isSignUp) {
+        await controller.signUp(email, password, username);
+        setError('Usuario registrado exitosamente. Revisa tu email para confirmar.');
+        setIsSignUp(false);
+      } else {
+        await controller.login(email, password);
+        onLoginSuccess();
+      }
+    } catch (err: any) {
+      setError(err.message || 'Error de autenticación');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -91,12 +99,26 @@ export function Login({ onLoginSuccess }: LoginProps) {
               <Music className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-3xl bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
-              VibeStream
+              SoundTream
             </h1>
           </motion.div>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
+            {isSignUp && (
+              <div className="relative">
+                <User className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="text"
+                  placeholder="Nombre de usuario"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-12 pr-4 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+            )}
+
             <div className="relative">
               <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
@@ -140,18 +162,28 @@ export function Login({ onLoginSuccess }: LoginProps) {
 
             <motion.button
               type="submit"
+              disabled={isLoading}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="w-full bg-gradient-to-r from-purple-500 to-cyan-500 text-white py-3 rounded-2xl font-medium shadow-lg shadow-purple-500/50 hover:shadow-purple-500/70 transition-shadow"
+              className="w-full bg-gradient-to-r from-purple-500 to-cyan-500 text-white py-3 rounded-2xl font-medium shadow-lg shadow-purple-500/50 hover:shadow-purple-500/70 transition-shadow disabled:opacity-50"
             >
-              Iniciar Sesión
+              {isLoading ? 'Cargando...' : (isSignUp ? 'Registrarse' : 'Iniciar Sesión')}
             </motion.button>
           </form>
 
-          {/* Demo info */}
+          <div className="mt-4 text-center">
+            <button
+              onClick={() => setIsSignUp(!isSignUp)}
+              className="text-purple-400 hover:text-purple-300 text-sm"
+            >
+              {isSignUp ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate'}
+            </button>
+          </div>
+
+          {/* Info */}
           <div className="mt-6 text-center text-sm text-gray-400">
-            <p className="mb-2">💡 Base de datos simulada con localStorage</p>
-            <p className="text-xs">El código 2FA se mostrará en la consola</p>
+            <p className="mb-2">🔐 Autenticación con Supabase</p>
+            <p className="text-xs">Base de datos PostgreSQL con RLS</p>
           </div>
         </div>
       </motion.div>

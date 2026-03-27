@@ -1,10 +1,10 @@
 import { Play } from 'lucide-react';
 import { motion } from 'motion/react';
-import { Song } from '../data/mockData';
+import { SongFull } from '../../models/MusicModel';
 
 interface SongCardProps {
-  song: Song;
-  onPlay: (song: Song) => void;
+  song: SongFull;
+  onPlay: (song: SongFull) => void;
 }
 
 export function SongCard({ song, onPlay }: SongCardProps) {
@@ -16,9 +16,9 @@ export function SongCard({ song, onPlay }: SongCardProps) {
       whileTap={{ scale: 0.95 }}
     >
       <div className="relative mb-4 overflow-hidden rounded-xl">
-        <img src={song.cover} alt={song.title} className="w-full aspect-square object-cover" />
+        <img src={song.album_cover || '/placeholder.jpg'} alt={song.song_title} className="w-full aspect-square object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-        <motion.button 
+        <motion.button
           className="absolute bottom-3 right-3 bg-gradient-to-r from-purple-500 to-cyan-500 rounded-full p-3 opacity-0 group-hover:opacity-100 shadow-lg shadow-purple-500/50"
           initial={{ scale: 0 }}
           whileHover={{ scale: 1.1 }}
@@ -26,8 +26,8 @@ export function SongCard({ song, onPlay }: SongCardProps) {
           <Play className="w-5 h-5 text-white" fill="white" />
         </motion.button>
       </div>
-      <div className="truncate mb-1">{song.title}</div>
-      <div className="text-sm text-gray-400 truncate">{song.artist}</div>
+      <div className="truncate mb-1">{song.song_title}</div>
+      <div className="text-sm text-gray-400 truncate">{song.artist_name}</div>
     </motion.div>
   );
 }
