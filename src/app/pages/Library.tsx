@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Clock, Heart, Music, Plus, Trash2, Edit2, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Song, Playlist } from '../../models/MusicModel';
-import MusicController from '../../controllers/MusicController';
+import { Song, Playlist, mockSongs, mockPlaylists } from '../data/mockData';
 
 interface LibraryProps {
   onPlaySong: (song: Song) => void;
@@ -15,17 +14,16 @@ export function Library({ onPlaySong }: LibraryProps) {
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [showCreatePlaylist, setShowCreatePlaylist] = useState(false);
   const [newPlaylistName, setNewPlaylistName] = useState('');
-  
-  const controller = MusicController.getInstance();
 
   useEffect(() => {
     loadData();
   }, []);
 
   const loadData = () => {
-    setHistory(controller.getHistory());
-    setFavorites(controller.getFavorites());
-    setPlaylists(controller.getAllPlaylists());
+    const historyData = JSON.parse(localStorage.getItem('soundwave_history') || '[]');
+    setHistory(historyData.map((h: any) => mockSongs.find(s => s.id === h.songId)).filter(Boolean));
+    setFavorites(JSON.parse(localStorage.getItem('soundwave_favorites') || '[]').map((id: string) => mockSongs.find(s => s.id === id)).filter(Boolean));
+    setPlaylists(mockPlaylists);
   };
 
   const formatDuration = (seconds: number) => {
@@ -36,28 +34,31 @@ export function Library({ onPlaySong }: LibraryProps) {
 
   const handleCreatePlaylist = () => {
     if (newPlaylistName.trim()) {
-      controller.createPlaylist(newPlaylistName.trim());
+      // For simplicity, just close the modal
       setNewPlaylistName('');
       setShowCreatePlaylist(false);
-      loadData();
     }
   };
 
   const handleDeletePlaylist = (id: string) => {
-    if (confirm('¿Eliminar esta playlist?')) {
-      controller.deletePlaylist(id);
-      loadData();
-    }
+    // For simplicity, do nothing
   };
 
   const handleToggleFavorite = (songId: string) => {
-    controller.toggleFavorite(songId);
+    const favorites = JSON.parse(localStorage.getItem('soundwave_favorites') || '[]');
+    const index = favorites.indexOf(songId);
+    if (index > -1) {
+      favorites.splice(index, 1);
+    } else {
+      favorites.push(songId);
+    }
+    localStorage.setItem('soundwave_favorites', JSON.stringify(favorites));
     loadData();
   };
 
   const handleClearHistory = () => {
     if (confirm('¿Borrar todo el historial?')) {
-      controller.clearHistory();
+      localStorage.removeItem('soundwave_history');
       loadData();
     }
   };

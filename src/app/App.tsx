@@ -5,31 +5,30 @@ import { Login } from './components/Login';
 import { Home } from './pages/Home';
 import { Search } from './pages/Search';
 import { Library } from './pages/Library';
-import { Song } from '../models/MusicModel';
-import MusicController from '../controllers/MusicController';
+import { Song } from '../data/mockData';
 
 export default function App() {
   const [user, setUser] = useState<any>(null);
   const [currentSong, setCurrentSong] = useState<Song | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  
-  const controller = MusicController.getInstance();
 
   // Verificar autenticación al cargar
   useEffect(() => {
-    if (controller.isAuthenticated()) {
-      const currentUser = controller.getCurrentUser();
-      setUser(currentUser);
+    const userData = localStorage.getItem('soundwave_user');
+    if (userData) {
+      setUser(JSON.parse(userData));
     }
   }, []);
 
   const handleLoginSuccess = () => {
-    const currentUser = controller.getCurrentUser();
-    setUser(currentUser);
+    const userData = localStorage.getItem('soundwave_user');
+    if (userData) {
+      setUser(JSON.parse(userData));
+    }
   };
 
   const handleLogout = () => {
-    controller.logout();
+    localStorage.removeItem('soundwave_user');
     setUser(null);
     setCurrentSong(null);
     setIsPlaying(false);
@@ -42,7 +41,9 @@ export default function App() {
       setCurrentSong(song);
       setIsPlaying(true);
       // Agregar al historial
-      controller.addToHistory(song.id);
+      const history = JSON.parse(localStorage.getItem('soundwave_history') || '[]');
+      history.push({ songId: song.id, playedAt: new Date() });
+      localStorage.setItem('soundwave_history', JSON.stringify(history));
     }
   };
 

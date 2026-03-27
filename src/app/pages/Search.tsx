@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Search as SearchIcon, Music } from 'lucide-react';
 import { motion } from 'motion/react';
-import { Song } from '../../models/MusicModel';
-import MusicController from '../../controllers/MusicController';
+import { Song, mockSongs } from '../data/mockData';
 import { SongCard } from '../components/SongCard';
 
 interface SearchProps {
@@ -14,21 +13,24 @@ export function Search({ onPlaySong }: SearchProps) {
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [searchResults, setSearchResults] = useState<Song[]>([]);
   const [genres, setGenres] = useState<string[]>([]);
-  
-  const controller = MusicController.getInstance();
 
   useEffect(() => {
-    const allGenres = controller.getGenres();
+    const allGenres = [...new Set(mockSongs.map(song => song.genre))].sort();
     setGenres(allGenres);
   }, []);
 
   useEffect(() => {
     if (searchQuery.trim()) {
-      const results = controller.searchSongs(searchQuery);
+      const lowerQuery = searchQuery.toLowerCase();
+      const results = mockSongs.filter(song =>
+        song.title.toLowerCase().includes(lowerQuery) ||
+        song.artist.toLowerCase().includes(lowerQuery) ||
+        song.album.toLowerCase().includes(lowerQuery)
+      );
       setSearchResults(results);
       setSelectedGenre(null);
     } else if (selectedGenre) {
-      const results = controller.getSongsByGenre(selectedGenre);
+      const results = mockSongs.filter(song => song.genre === selectedGenre);
       setSearchResults(results);
     } else {
       setSearchResults([]);

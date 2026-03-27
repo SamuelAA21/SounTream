@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { Music, Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'motion/react';
-import MusicController from '../../controllers/MusicController';
-import { TwoFactorAuth } from './TwoFactorAuth';
 
 interface LoginProps {
   onLoginSuccess: () => void;
@@ -13,30 +11,25 @@ export function Login({ onLoginSuccess }: LoginProps) {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
-  const [showTwoFactor, setShowTwoFactor] = useState(false);
-  
-  const controller = MusicController.getInstance();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    const result = controller.login(email, password);
-    if (result) {
-      setShowTwoFactor(true);
+    if (email === 'demo@soundwave.com' && password === 'demo123') {
+      const user = {
+        id: '1',
+        email: email,
+        favoriteGenres: [],
+        favoriteArtists: [],
+        history: []
+      };
+      localStorage.setItem('soundwave_user', JSON.stringify(user));
+      onLoginSuccess();
     } else {
       setError('Credenciales incorrectas. Usa: demo@soundwave.com / demo123');
     }
   };
-
-  if (showTwoFactor) {
-    return (
-      <TwoFactorAuth
-        onSuccess={onLoginSuccess}
-        onBack={() => setShowTwoFactor(false)}
-      />
-    );
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
