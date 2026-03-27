@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Play, TrendingUp, Music, Clock } from 'lucide-react';
 import { motion } from 'motion/react';
-import { Song, mockSongs, mockPlaylists, getRecommendations } from '../data/mockData';
+import { Song } from '../../models/MusicModel';
 import { SongCard } from '../components/SongCard';
 import { PlaylistCard } from '../components/PlaylistCard';
+import MusicController from '../../controllers/MusicController';
 
 interface HomeProps {
   onPlaySong: (song: Song) => void;
@@ -13,20 +14,16 @@ export function Home({ onPlaySong }: HomeProps) {
   const [recommendations, setRecommendations] = useState<Song[]>([]);
   const [popularSongs, setPopularSongs] = useState<Song[]>([]);
   const [stats, setStats] = useState({ totalPlays: 0, favoriteGenres: [], favoriteArtists: [] });
+  const controller = MusicController.getInstance();
 
   useEffect(() => {
-    // Cargar recomendaciones
-    const history = JSON.parse(localStorage.getItem('soundwave_history') || '[]');
-    const recs = getRecommendations(history.map((h: any) => mockSongs.find(s => s.id === h.songId)).filter(Boolean));
+    const recs = controller.getRecommendations(10);
     setRecommendations(recs);
 
-    // Cargar canciones populares
-    const popular = [...mockSongs].sort((a, b) => b.plays - a.plays).slice(0, 6);
+    const popular = controller.getPopularSongs(6);
     setPopularSongs(popular);
 
-    // Cargar estadísticas
-    const userStats = { totalPlays: history.length, favoriteGenres: [], favoriteArtists: [] };
-    setStats(userStats);
+    setStats(controller.getUserStats());
   }, []);
 
   const getGreeting = () => {

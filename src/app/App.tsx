@@ -5,30 +5,26 @@ import { Login } from './components/Login';
 import { Home } from './pages/Home';
 import { Search } from './pages/Search';
 import { Library } from './pages/Library';
-import { Song } from '../data/mockData';
+import { Song } from '../models/MusicModel';
+import MusicController from '../controllers/MusicController';
+
+const controller = MusicController.getInstance();
 
 export default function App() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState(controller.getCurrentUser());
   const [currentSong, setCurrentSong] = useState<Song | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  // Verificar autenticación al cargar
   useEffect(() => {
-    const userData = localStorage.getItem('soundwave_user');
-    if (userData) {
-      setUser(JSON.parse(userData));
-    }
+    setUser(controller.getCurrentUser());
   }, []);
 
   const handleLoginSuccess = () => {
-    const userData = localStorage.getItem('soundwave_user');
-    if (userData) {
-      setUser(JSON.parse(userData));
-    }
+    setUser(controller.getCurrentUser());
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('soundwave_user');
+    controller.logout();
     setUser(null);
     setCurrentSong(null);
     setIsPlaying(false);
@@ -40,19 +36,15 @@ export default function App() {
     } else {
       setCurrentSong(song);
       setIsPlaying(true);
-      // Agregar al historial
-      const history = JSON.parse(localStorage.getItem('soundwave_history') || '[]');
-      history.push({ songId: song.id, playedAt: new Date() });
-      localStorage.setItem('soundwave_history', JSON.stringify(history));
+      controller.addToHistory(song.id);
     }
   };
 
   const handlePlayPause = () => {
-    setIsPlaying(!isPlaying);
+    setIsPlaying((v) => !v);
   };
 
   const handleNext = () => {
-    // Obtener recomendaciones y reproducir la siguiente
     const recommendations = controller.getRecommendations(10);
     if (recommendations.length > 0) {
       const nextSong = recommendations[0];
@@ -63,17 +55,18 @@ export default function App() {
   };
 
   const handlePrevious = () => {
-    // Obtener historial y reproducir la anterior
     const history = controller.getHistory();
     if (history.length >= 2) {
-      const prevSong = history[1]; // La segunda en el historial (la actual es la primera)
-      setCurrentSong(prevSong);
-      setIsPlaying(true);
+      const prev = history[1];
+      const prevSong = controller.getAllSongs().find((s) => s.id === prev.songId);
+      if (prevSong) {
+        setCurrentSong(prevSong);
+        setIsPlaying(true);
+      }
     }
   };
 
-  // Si no está autenticado, mostrar login
-  if (!user) {
+  if (!controller.isAuthenticated() || !user) {
     return <Login onLoginSuccess={handleLoginSuccess} />;
   }
 
@@ -127,3 +120,4 @@ export default function App() {
 
   return <RouterProvider router={router} />;
 }
+

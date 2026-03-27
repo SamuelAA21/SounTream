@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Search as SearchIcon, Music } from 'lucide-react';
 import { motion } from 'motion/react';
-import { Song, mockSongs } from '../data/mockData';
+import { Song } from '../../models/MusicModel';
 import { SongCard } from '../components/SongCard';
+import MusicController from '../../controllers/MusicController';
 
 interface SearchProps {
   onPlaySong: (song: Song) => void;
